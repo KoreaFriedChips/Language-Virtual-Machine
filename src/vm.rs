@@ -5,6 +5,7 @@ pub struct VM {
     // array of registers so we can have the location of each register at compile time
     pc: usize,                // program counter
     pub program: Vec<u8>,     // program stored as byte code in a vector
+    heap: Vec<u8>,            // heap to store data
     remainder: u32,           // remainder register for division instruction
     equal_flag: bool, // contains the result of the last comparison operation, usually mips uses another register
     pub parse_hex_flag: bool, // flag to turn on hex parsing
@@ -16,6 +17,7 @@ impl VM {
             registers: [0; 32],
             pc: 0,
             program: vec![],
+            heap: vec![],
             remainder: 0,
             equal_flag: false,
             parse_hex_flag: false,
@@ -152,6 +154,11 @@ impl VM {
                 if !self.equal_flag {
                     self.pc = target as usize;
                 }
+            }
+            Opcode::ALOC => {
+                let bytes = self.registers[self.next_8_bits() as usize];
+                let new_end = self.heap.len() as i32 + bytes;
+                self.heap.resize(new_end as usize, 0);
             }
             _ => {
                 println!("Unrecognized opcode found! Terminating!");
@@ -305,5 +312,14 @@ mod tests {
         assert_eq!(test_vm.equal_flag, true);
         test_vm.run_once();
         assert_eq!(test_vm.pc, 20);
+    }
+
+    #[test]
+    fn test_aloc_opcode() {
+        let mut test_vm = VM::new();
+        test_vm.registers[0] = 1024;
+        test_vm.program = vec![17, 0, 0, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.heap.len(), 1024);
     }
 }

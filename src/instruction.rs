@@ -19,6 +19,7 @@ pub enum Opcode {
     LTQ,  // ltq $0 $1
     JEQ,  // jeq $0
     JNEQ, // jneq $0
+    ALOC, // aloc $0
     IGL,  // illegal
 }
 
@@ -53,6 +54,7 @@ impl From<u8> for Opcode {
             14 => Opcode::LTQ,
             15 => Opcode::JEQ,
             16 => Opcode::JNEQ,
+            17 => Opcode::ALOC,
             _ => Opcode::IGL,
         }
     }
@@ -80,6 +82,7 @@ impl<'a> From<CompleteStr<'a>> for Opcode {
             "LTQ" => Opcode::LTQ,
             "JEQ" => Opcode::JEQ,
             "JNEQ" => Opcode::JNEQ,
+            "ALOC" => Opcode::ALOC,
             _ => Opcode::IGL,
         }
     }
