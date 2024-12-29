@@ -6,6 +6,7 @@ pub struct VM {
     pc: usize,        // program counter
     program: Vec<u8>, // program stored as byte code in a vector
     remainder: u32,   // remainder register for division instruction
+    equal_flag: bool, // contains the result of the last comparison operation, usually mips uses another register
 }
 
 impl VM {
@@ -15,6 +16,7 @@ impl VM {
             pc: 0,
             program: vec![],
             remainder: 0,
+            equal_flag: false,
         }
     }
 
@@ -76,6 +78,78 @@ impl VM {
             Opcode::JMPB => {
                 let val = self.registers[self.next_8_bits() as usize];
                 self.pc -= val as usize;
+            }
+            Opcode::EQ => {
+                let r1 = self.registers[self.next_8_bits() as usize];
+                let r2 = self.registers[self.next_8_bits() as usize];
+                if r1 == r2 {
+                    self.equal_flag = true;
+                } else {
+                    self.equal_flag = false;
+                }
+                self.next_8_bits();
+            }
+            Opcode::NEQ => {
+                let r1 = self.registers[self.next_8_bits() as usize];
+                let r2 = self.registers[self.next_8_bits() as usize];
+                if r1 != r2 {
+                    self.equal_flag = true;
+                } else {
+                    self.equal_flag = false;
+                }
+                self.next_8_bits();
+            }
+            Opcode::GT => {
+                let r1 = self.registers[self.next_8_bits() as usize];
+                let r2 = self.registers[self.next_8_bits() as usize];
+                if r1 > r2 {
+                    self.equal_flag = true;
+                } else {
+                    self.equal_flag = false;
+                }
+                self.next_8_bits();
+            }
+            Opcode::LT => {
+                let r1 = self.registers[self.next_8_bits() as usize];
+                let r2 = self.registers[self.next_8_bits() as usize];
+                if r1 < r2 {
+                    self.equal_flag = true;
+                } else {
+                    self.equal_flag = false;
+                }
+                self.next_8_bits();
+            }
+            Opcode::GTQ => {
+                let r1 = self.registers[self.next_8_bits() as usize];
+                let r2 = self.registers[self.next_8_bits() as usize];
+                if r1 >= r2 {
+                    self.equal_flag = true;
+                } else {
+                    self.equal_flag = false;
+                }
+                self.next_8_bits();
+            }
+            Opcode::LTQ => {
+                let r1 = self.registers[self.next_8_bits() as usize];
+                let r2 = self.registers[self.next_8_bits() as usize];
+                if r1 <= r2 {
+                    self.equal_flag = true;
+                } else {
+                    self.equal_flag = false;
+                }
+                self.next_8_bits();
+            }
+            Opcode::JEQ => {
+                let target = self.registers[self.next_8_bits() as usize];
+                if self.equal_flag {
+                    self.pc = target as usize;
+                }
+            }
+            Opcode::JNEQ => {
+                let target = self.registers[self.next_8_bits() as usize];
+                if !self.equal_flag {
+                    self.pc = target as usize;
+                }
             }
             _ => {
                 println!("Unrecognized opcode found! Terminating!");
@@ -199,5 +273,31 @@ mod tests {
         test_vm.program = vec![7, 0, 0, 0];
         test_vm.run_once();
         assert_eq!(test_vm.pc, 4);
+    }
+
+    #[test]
+    fn test_eq_opcode() {
+        let mut test_vm = VM::new();
+        test_vm.registers[0] = 10;
+        test_vm.registers[1] = 10;
+        test_vm.program = vec![9, 0, 1, 0, 9, 0, 1, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.equal_flag, true);
+        test_vm.registers[1] = 20;
+        test_vm.run_once();
+        assert_eq!(test_vm.equal_flag, false);
+    }
+
+    #[test]
+    fn test_jeq_opcode() {
+        let mut test_vm = VM::new();
+        test_vm.registers[0] = 10;
+        test_vm.registers[1] = 10;
+        test_vm.registers[2] = 20;
+        test_vm.program = vec![9, 0, 1, 0, 15, 2, 0, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.equal_flag, true);
+        test_vm.run_once();
+        assert_eq!(test_vm.pc, 20);
     }
 }
