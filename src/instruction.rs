@@ -1,23 +1,25 @@
+use nom::types::CompleteStr;
+
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Opcode {
-    LOAD,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    HLT,
-    JMP,
-    JMPF,
-    JMPB,
-    EQ,
-    NEQ,
-    GT,
-    LT,
-    GTQ,
-    LTQ,
-    JEQ,
-    JNEQ,
-    IGL,
+    LOAD, // load $0 #10
+    ADD,  // add $0 $1 $2
+    SUB,  // sub $0 $1 $2
+    MUL,  // mul $0 $1 $2
+    DIV,  // div $0 $1 $2
+    HLT,  // hlt
+    JMP,  // jmp $0
+    JMPF, // jmpf $0
+    JMPB, // jmpb $0
+    EQ,   // eq $0 $1
+    NEQ,  // neq $0 $1
+    GT,   // gt $0 $1
+    LT,   // lt $0 $1
+    GTQ,  // gtq $0 $1
+    LTQ,  // ltq $0 $1
+    JEQ,  // jeq $0
+    JNEQ, // jneq $0
+    IGL,  // illegal
 }
 
 #[derive(Debug, PartialEq)]
@@ -56,6 +58,33 @@ impl From<u8> for Opcode {
     }
 }
 
+impl<'a> From<CompleteStr<'a>> for Opcode {
+    fn from(v: CompleteStr<'a>) -> Self {
+        let s = v.to_uppercase();
+
+        match s.as_str() {
+            "LOAD" => Opcode::LOAD,
+            "ADD" => Opcode::ADD,
+            "SUB" => Opcode::SUB,
+            "MUL" => Opcode::MUL,
+            "DIV" => Opcode::DIV,
+            "HLT" => Opcode::HLT,
+            "JMP" => Opcode::JMP,
+            "JMPF" => Opcode::JMPF,
+            "JMPB" => Opcode::JMPB,
+            "EQ" => Opcode::EQ,
+            "NEQ" => Opcode::NEQ,
+            "GT" => Opcode::GT,
+            "LT" => Opcode::LT,
+            "GTQ" => Opcode::GTQ,
+            "LTQ" => Opcode::LTQ,
+            "JEQ" => Opcode::JEQ,
+            "JNEQ" => Opcode::JNEQ,
+            _ => Opcode::IGL,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,5 +99,13 @@ mod tests {
     fn test_create_instruction() {
         let instruction = Instruction::new(Opcode::HLT);
         assert_eq!(instruction.opcode, Opcode::HLT);
+    }
+
+    #[test]
+    fn test_str_to_opcode() {
+        let opcode = Opcode::from(CompleteStr("load"));
+        assert_eq!(opcode, Opcode::LOAD);
+        let opcode = Opcode::from(CompleteStr("illegal"));
+        assert_eq!(opcode, Opcode::IGL);
     }
 }

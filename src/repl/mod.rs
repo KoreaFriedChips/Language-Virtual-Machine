@@ -1,4 +1,3 @@
-use nom::types::CompleteStr;
 use std;
 use std::io;
 use std::io::Write;
@@ -65,14 +64,14 @@ impl REPL {
                     println!("End of register listing");
                 }
                 ".hex" => {
-                    self.vm.parse_hex = !self.vm.parse_hex;
+                    self.vm.parse_hex_flag = !self.vm.parse_hex_flag;
                     println!(
                         "Hex parsing is now turned {}",
-                        if self.vm.parse_hex { "on" } else { "off" }
+                        if self.vm.parse_hex_flag { "on" } else { "off" }
                     );
                 }
                 _ => {
-                    if (self.vm.parse_hex) {
+                    if self.vm.parse_hex_flag {
                         let res = self.parse_hex(buffer);
                         match res {
                             Ok(bytes) => {
@@ -85,16 +84,14 @@ impl REPL {
                             }
                         };
                     } else {
-                        let parsed_program = program(CompleteStr(buffer));
-                        if !parsed_program.is_ok() {
-                            println!("Error parsing program: {:?}", parsed_program);
-                            continue;
-                        }
-                        let (_, result) = parsed_program.unwrap();
-                        let bytecode = result.to_bytes();
-                        for byte in bytecode {
-                            self.vm.add_byte(byte);
-                        }
+                        let program = match program(buffer.into()) {
+                            Ok((_, program)) => program,
+                            Err(_) => {
+                                println!("Invalid input. Please enter a valid program");
+                                continue;
+                            }
+                        };
+                        self.vm.program.append(&mut program.to_bytes());
                     }
                     self.vm.run_once();
                 }
@@ -103,6 +100,8 @@ impl REPL {
     }
 
     // allows users to input hex strings to add to the VM's program
+    // Accepts a hexadecimal string WITHOUT a leading `0x` and returns a Vec of u8
+    // Example for a LOAD command: 00 01 03 E8
     fn parse_hex(&mut self, hex: &str) -> Result<Vec<u8>, ParseIntError> {
         let split = hex.split(" ").collect::<Vec<&str>>();
         let mut res: Vec<u8> = vec![];
