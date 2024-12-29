@@ -1,7 +1,10 @@
+use nom::types::CompleteStr;
 use std;
-use std::io;
+use std::fs::File;
 use std::io::Write;
+use std::io::{self, Read};
 use std::num::ParseIntError;
+use std::path::Path;
 use vm::VM;
 
 use crate::assembler::program_parsers::program;
@@ -69,6 +72,29 @@ impl REPL {
                         "Hex parsing is now turned {}",
                         if self.vm.parse_hex_flag { "on" } else { "off" }
                     );
+                }
+                ".load_file" => {
+                    print!("Please enter the path to the file you wish to load: ");
+                    io::stdout().flush().expect("Unable to flush stdout");
+
+                    let mut tmp = String::new();
+                    stdin
+                        .read_line(&mut tmp)
+                        .expect("Unable to read from stdin");
+                    let tmp = tmp.trim();
+                    let filename = Path::new(&tmp);
+                    let mut f = File::open(Path::new(&filename)).expect("File not found");
+                    let mut contents = String::new();
+                    f.read_to_string(&mut contents)
+                        .expect("Something went wrong reading the file");
+                    let program = match program(CompleteStr(&contents)) {
+                        Ok((_, program)) => program,
+                        Err(e) => {
+                            println!("Error parsing program: {:?}", e);
+                            continue;
+                        }
+                    };
+                    self.vm.program.append(&mut program.to_bytes());
                 }
                 _ => {
                     if self.vm.parse_hex_flag {
