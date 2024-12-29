@@ -80,6 +80,7 @@ impl REPL {
         }
     }
 
+    // allows users to input hex strings to add to the VM's program
     fn parse_hex(&mut self, hex: &str) -> Result<Vec<u8>, ParseIntError> {
         let split = hex.split(" ").collect::<Vec<&str>>();
         let mut res: Vec<u8> = vec![];
