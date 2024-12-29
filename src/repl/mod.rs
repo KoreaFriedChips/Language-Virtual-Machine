@@ -1,9 +1,11 @@
+use nom::types::CompleteStr;
 use std;
 use std::io;
 use std::io::Write;
 use std::num::ParseIntError;
 use vm::VM;
 
+use crate::assembler::program_parsers::program;
 use crate::vm;
 
 // REPL: read evaluate print loop
@@ -62,18 +64,38 @@ impl REPL {
                     println!("{:?}", self.vm.registers);
                     println!("End of register listing");
                 }
+                ".hex" => {
+                    self.vm.parse_hex = !self.vm.parse_hex;
+                    println!(
+                        "Hex parsing is now turned {}",
+                        if self.vm.parse_hex { "on" } else { "off" }
+                    );
+                }
                 _ => {
-                    let res = self.parse_hex(buffer);
-                    match res {
-                        Ok(bytes) => {
-                            for byte in bytes {
-                                self.vm.add_byte(byte);
+                    if (self.vm.parse_hex) {
+                        let res = self.parse_hex(buffer);
+                        match res {
+                            Ok(bytes) => {
+                                for byte in bytes {
+                                    self.vm.add_byte(byte);
+                                }
                             }
+                            Err(_e) => {
+                                println!("Invalid input. Please enter a valid hex string (4 groups of 2 hex characters)");
+                            }
+                        };
+                    } else {
+                        let parsed_program = program(CompleteStr(buffer));
+                        if !parsed_program.is_ok() {
+                            println!("Error parsing program: {:?}", parsed_program);
+                            continue;
                         }
-                        Err(_e) => {
-                            println!("Invalid input. Please enter a valid hex string (4 groups of 2 hex characters)");
+                        let (_, result) = parsed_program.unwrap();
+                        let bytecode = result.to_bytes();
+                        for byte in bytecode {
+                            self.vm.add_byte(byte);
                         }
-                    };
+                    }
                     self.vm.run_once();
                 }
             }

@@ -7,6 +7,7 @@ pub struct VM {
     pub program: Vec<u8>, // program stored as byte code in a vector
     remainder: u32,       // remainder register for division instruction
     equal_flag: bool, // contains the result of the last comparison operation, usually mips uses another register
+    pub parse_hex: bool, // flag to turn on hex parsing
 }
 
 impl VM {
@@ -17,6 +18,7 @@ impl VM {
             program: vec![],
             remainder: 0,
             equal_flag: false,
+            parse_hex: false,
         }
     }
 
