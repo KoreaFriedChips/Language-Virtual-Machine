@@ -1,11 +1,11 @@
 use crate::instruction::Opcode;
 
 pub struct VM {
-    registers: [i32; 32],
+    pub registers: [i32; 32],
     // array of registers so we can have the location of each register at compile time
-    pc: usize,        // program counter
-    program: Vec<u8>, // program stored as byte code in a vector
-    remainder: u32,   // remainder register for division instruction
+    pc: usize,            // program counter
+    pub program: Vec<u8>, // program stored as byte code in a vector
+    remainder: u32,       // remainder register for division instruction
     equal_flag: bool, // contains the result of the last comparison operation, usually mips uses another register
 }
 
@@ -175,6 +175,10 @@ impl VM {
         let res = ((self.program[self.pc] as u16) << 8) | self.program[self.pc + 1] as u16;
         self.pc += 2;
         return res;
+    }
+
+    pub fn add_byte(&mut self, byte: u8) {
+        self.program.push(byte);
     }
 }
 
