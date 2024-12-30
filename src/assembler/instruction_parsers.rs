@@ -6,6 +6,7 @@ use nom::multispace;
 use nom::types::CompleteStr;
 
 use super::directive_parsers::directive;
+use super::SymbolTable;
 
 #[derive(Debug, PartialEq)]
 pub struct AssemblerInstruction {
@@ -18,7 +19,7 @@ pub struct AssemblerInstruction {
 }
 
 impl AssemblerInstruction {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
         let mut res: Vec<u8> = vec![];
         match self.opcode {
             Some(Token::Op { code }) => match code {
@@ -60,6 +61,20 @@ impl AssemblerInstruction {
                 print!("Invalid operand found");
                 std::process::exit(1);
             }
+        }
+    }
+
+    pub fn is_label(&self) -> bool {
+        self.label.is_some()
+    }
+
+    pub fn label_name(&self) -> Option<String> {
+        match &self.label {
+            Some(l) => match l {
+                Token::LabelDeclaration { name } => Some(name.clone()),
+                _ => None,
+            },
+            None => None,
         }
     }
 }
